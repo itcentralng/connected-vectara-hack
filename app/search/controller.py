@@ -20,14 +20,14 @@ def create_search():
     return Response(status=200)
 
 @bp.post('/sms')
-@special_auth_required()
+@auth_required()
 def initiate_search():
     location = request.json.get("location")
     shortcode = request.json.get("shortcode")
-    message = request.json.get('text')
+    message = request.json.get('message')
     users = User.get_by_location(location)
     send_sms([user.phone for user in users], message, sender=shortcode)
-    return Response(status=200)
+    return {'message': 'Message sent successfully!'}, 200
 
 @bp.get('/search/<int:id>')
 @auth_required()
