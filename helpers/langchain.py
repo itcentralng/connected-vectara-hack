@@ -1,3 +1,4 @@
+import os
 from langchain.vectorstores.vectara import Vectara
 
 from langchain.chains import RetrievalQA
@@ -9,7 +10,7 @@ from langchain.schema import HumanMessage, AIMessage
 
 
 def do_search(question, language, history=[]):
-    docsearch = Vectara()
+    docsearch = Vectara(os.getenv("VECTARA_CUSTOMER_ID"), os.getenv("VECTARA_CORPUS_ID"), os.getenv("VECTARA_API_KEY"))
 
     llm = ChatOpenAI()
     qa = RetrievalQA.from_chain_type(
