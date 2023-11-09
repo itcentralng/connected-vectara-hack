@@ -20,7 +20,7 @@ def create_search():
     return Response(status=200)
 
 @bp.post('/sms')
-@auth_required()
+# @auth_required()
 def initiate_search():
     location = request.json.get("location")
     shortcode = request.json.get("shortcode")
