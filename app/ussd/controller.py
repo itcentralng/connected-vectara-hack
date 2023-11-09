@@ -16,7 +16,7 @@ def listed_to_ussd():
     selection = request.form.get('text')
     user = User.get_by_phone(phone)
     if not user:
-        user = User.create('', 'english', phone, phone, 'user')
+        user = User.create('', 'english', 'nigeria', 'kaduna', 'kaduna north', 'kaduna', phone, phone, 'user')
     session = Ussd.get_by_session_id(session_id)
     if session:
         if selection.split('*')[-1] == '0':
