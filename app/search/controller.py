@@ -3,6 +3,7 @@ from app.route_guard import auth_required, special_auth_required
 
 from app.search.model import *
 from app.search.schema import *
+from app.user.model import User
 from helpers.langchain import do_search
 from helpers.sms import send_sms
 
@@ -12,10 +13,20 @@ bp = Blueprint('search', __name__)
 @special_auth_required()
 def create_search():
     shortcode = request.form.get("to")
-    print(shortcode)
     question = request.form.get('text')
-    answer = do_search(question, g.user.language)
-    send_sms(g.user.phone, answer, sender=shortcode)
+    history = Search.get_latest_by_user_id(g.user.id)
+    answer = do_search(question, g.user.language, history)
+    send_sms([g.user.phone], answer, sender=shortcode)
+    return Response(status=200)
+
+@bp.post('/sms')
+@special_auth_required()
+def initiate_search():
+    location = request.json.get("location")
+    shortcode = request.json.get("shortcode")
+    message = request.json.get('text')
+    users = User.get_by_location(location)
+    send_sms([user.phone for user in users], message, sender=shortcode)
     return Response(status=200)
 
 @bp.get('/search/<int:id>')

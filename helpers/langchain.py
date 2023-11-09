@@ -1,38 +1,52 @@
-from langchain.chat_models import ChatOpenAI
-from langchain.agents import ZeroShotAgent, Tool, AgentExecutor
-from langchain.chains import LLMChain
-from langchain.utilities.serpapi import SerpAPIWrapper
+from langchain.vectorstores.vectara import Vectara
 
-def do_search(input, language="english"):
-    model ='gpt-4'
-    search = SerpAPIWrapper()
+from langchain.chains import RetrievalQA
+from langchain.chat_models import ChatOpenAI
+from langchain.tools import Tool
+from langchain.agents import initialize_agent
+from langchain.agents.types import AgentType
+from langchain.schema import HumanMessage, AIMessage
+
+
+def do_search(question, language, history=[]):
+    docsearch = Vectara()
+
+    llm = ChatOpenAI()
+    qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=docsearch.as_retriever(),
+    )
+
+    system_message = f"""
+            "You are a helpful health expert."
+            "You provide assistant to users on health matters"
+            "You can ask questions to help you understand and diagnose a problem."
+            "Try to sound as human as possible"
+            "Make your responses as concise as possible"
+            "Your response must be in {language} language"
+            """
     tools = [
         Tool(
-            name="Search",
-            func=search.run,
-            description="useful for when you need to answer questions about current events",
+            name="Health Assistant",
+            func=qa.run,
+            description=f"Useful when you need to answer health related questions",
         )
     ]
-
-    prefix = """Answer the following questions as best you can. You have access to the following tools:"""
-    suffix = """When answering, you MUST speak in the following language: {language}.
-
-    Question: {input}
-    {agent_scratchpad}"""
-
-    prompt = ZeroShotAgent.create_prompt(
-        tools,
-        prefix=prefix,
-        suffix=suffix,
-        input_variables=["input", "language", "agent_scratchpad"],
+    executor = initialize_agent(
+        agent = AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
+        tools=tools,
+        llm=llm,
+        handle_parsing_errors="Check your output and make sure it conforms!",
+        agent_kwargs={"system_message": system_message},
+        verbose=True,
     )
 
-    llm_chain = LLMChain(llm=ChatOpenAI(model=model), prompt=prompt)
+    q = {"question": question}
 
-    agent = ZeroShotAgent(llm_chain=llm_chain, tools=tools)
+    chat_history = []
+    for h in history:
+        chat_history.append(HumanMessage(content=h.question))
+        chat_history.append(AIMessage(content=h.answer))
 
-    agent_executor = AgentExecutor.from_agent_and_tools(
-        agent=agent, tools=tools, verbose=True
-    )
-
-    return agent_executor.run(input=input, language=language)
+    return executor.run(input=q, chat_history=chat_history)

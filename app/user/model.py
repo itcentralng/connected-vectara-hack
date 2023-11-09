@@ -1,5 +1,7 @@
 import jwt, string, secrets, bcrypt
 from datetime import datetime
+
+from sqlalchemy import or_
 from app import app, db, secret
 from helpers.phonenumber import validate_phonenumber
 
@@ -9,6 +11,10 @@ class User(db.Model):
     phone = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
     language = db.Column(db.String)
+    country = db.Column(db.String)
+    state = db.Column(db.String)
+    lga = db.Column(db.String)
+    town = db.Column(db.String)
     is_set = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
     updated_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
@@ -18,9 +24,13 @@ class User(db.Model):
         db.session.add(self)
         db.session.commit()
     
-    def update(self, name=None, language=None, is_set=None):
+    def update(self, name=None, language=None, country=None, state=None, lga=None, town=None, is_set=None):
         self.name = name or self.name
         self.language = language or self.language
+        self.country = country or self.country
+        self.state = state or self.state
+        self.lga = lga or self.lga
+        self.town = town or self.town
         self.is_set = is_set or self.is_set
         self.updated_at = db.func.now()
         db.session.commit()
@@ -64,12 +74,15 @@ class User(db.Model):
     
     @classmethod
     def get_by_phone(self, phone):
-        print(phone)
         return User.query.filter(User.phone.ilike(f"%{phone[1:]}%")).first()
     
     @classmethod
-    def create(cls, name, language, phone, password, role):
-        user = cls(name=name, language=language, phone=validate_phonenumber(phone), password=password, role=role)
+    def get_by_location(self, location):
+        return User.query.filter(or_(User.country.ilike(f"%{location}%"), User.state.ilike(f"%{location}%"), User.lga.ilike(f"%{location}%"), User.town.ilike(f"%{location}%"))).all()
+    
+    @classmethod
+    def create(cls, name, language, country, state, lga, town, phone, password, role):
+        user = cls(name=name, language=language, country=country, state=state, lga=lga, town=town, phone=validate_phonenumber(phone), password=password, role=role)
         user.hash_password()
         user.save()
         return user

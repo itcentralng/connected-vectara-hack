@@ -36,12 +36,16 @@ def reset_password():
 def register():
     name = request.json.get('name')
     language = request.json.get('language', 'english')
+    country = request.json.get('country', 'nigeria')
+    state = request.json.get('state', 'kaduna')
+    lga = request.json.get('lga', 'kaduna north')
+    town = request.json.get('town', 'kaduna')
     phone = request.json.get('phone')
     password = request.json.get('password')
     user = User.get_by_phone(phone)
     if user is not None:
         return jsonify({'message': 'User already exists'}), 400
-    user = User.create(name, language, phone, password, 'user')
+    user = User.create(name, language, country, state, lga, town, phone, password, 'user')
     if user is not None:
         return jsonify({'message': 'User created'}), 201
     return jsonify({'message': 'User not created'}), 400

@@ -1,7 +1,7 @@
 import os
 import africastalking
 
-def send_sms(recipient, message, sender=None):
+def send_sms(recipients, message, sender=None):
         # Set your app credentials
         username = os.getenv("AT_USERNAME")
         api_key = os.getenv("AT_API_KEY")
@@ -12,7 +12,7 @@ def send_sms(recipient, message, sender=None):
         # Get the SMS service
         sms = africastalking.SMS
         # Set the numbers you want to send to in international format
-        recipients = [recipient]
+        recipients = recipients
 
         # Set your shortCode or senderId
         sender = sender or os.getenv("AT_SHORTCODE")
