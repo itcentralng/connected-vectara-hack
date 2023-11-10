@@ -27,4 +27,4 @@ from app.ussd.controller import bp as ussd_bp
 app.register_blueprint(ussd_bp)
 
 # Error handlers
-# from .error_handlers import *
+from .error_handlers import *
